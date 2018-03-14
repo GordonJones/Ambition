@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <title>Ambition using fancyTree and pouchdb</title>
+
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/jquery.fancytree@2.27/dist/skin-lion/ui.fancytree.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/jquery.fancytree@2.27/dist/jquery.fancytree-all-deps.min.js"></script>
+
+  <!-- jquery-contextmenu (https://github.com/swisnl/jQuery-contextMenu) -->
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.2.3/jquery.contextMenu.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.2.3/jquery.contextMenu.min.js">
+  </script>
+
+<style type="text/css">
+span.fancytree-node.type_set span.fancytree-title {
+  color: brown;
+}
+span.fancytree-node.type_action span.fancytree-title {
+  color: red;
+}
+span.fancytree-node.type_dressing span.fancytree-title {
+  color: green;
+}
+span.fancytree-node.fancytree-clone{
+  background-color: Snow;
+}
+span.fancytree-node.isMaster {
+  background-color: initial;
+}
+span.fancytree-node.fancytree-clone span.fancytree-title:after {
+  content: "";
+  background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAFVBMVEVmmcwzmcyZzP8AZswAZv////////9E6giVAAAAB3RSTlP///////8AGksDRgAAADhJREFUGFcly0ESAEAEA0Ei6/9P3sEcVB8kmrwFyni0bOeyyDpy9JTLEaOhQq7Ongf5FeMhHS/4AVnsAZubxDVmAAAAAElFTkSuQmCC") 100% 50% no-repeat;
+  padding-right: 13px;
+}
+
+
+span.fancytree-node.fancytree-active-clone {
+  border-color: blue;
+  -moz-animation: flash 1s ease-out;
+  -moz-animation-iteration-count: 1;
+  -webkit-animation: flash 1s ease-out;
+  -webkit-animation-iteration-count: 1;
+  -ms-animation: flash 1s ease-out;
+  -ms-animation-iteration-count: 1;
+}
+
+@-ms-keyframes flash {
+  0% { background-color:none;}
+  50% { background-color:#fbf8b2;}
+  100% {background-color:none;}
+}
+@-moz-keyframes flash {
+  0% { background-color:none;}
+  50% { background-color:#fbf8b2;}
+  100% {background-color:none;}
+}
+@-ms-keyframes flash {
+  0% { background-color:none;}
+  50% { background-color:#fbf8b2;}
+  100% {background-color:none;}
+}
+</style>
+
+
+<!-- Add code to initialize the tree when the document is loaded: -->
+<script type="text/javascript">
+
+var NODES = [
+  {title: "Game of Thrones", key: "proj1", type: "project", isMaster: true, expanded: true, extraClasses: "isMaster type_project"},
+  {title: "Sets", key:"sets", type: "top_level", isMaster: true, expanded: true, extraClasses: "isMaster type_top_level"},
+  {title: "INT Annie's House", key:"set1", type: "set", isMaster: true, expanded: true, extraClasses: "isMaster type_set"},
+  {title: "EXT Annie's House", key:"set2", type: "set", isMaster: true, expanded: true, extraClasses: "isMaster type_set"},
+  {title: "Annie's car", key: "set3", type: "set", isMaster: true, expanded: true, extraClasses: "isMaster type_set"},
+  {title: "Scripts", key:"scripts", type: "top_level", isMaster: true, expanded: true, extraClasses: "isMaster type_top_level"},
+  {title: "episode 1", key:"ep1", type: "script", isMaster: true, expanded: true, extraClasses: "isMaster type_script"},
+  {title: "scene 1.1", key: "sc1.1", type: "scene", isMaster: true, expanded: true, extraClasses: "isMaster type_scene"},
+  {title: "scene 1.2", key: "sc1.2", type: "scene", isMaster: true, expanded: true, extraClasses: "isMaster type_scene"},
+  {title: "newspaper", key: "prop1", type: "action", isMaster: true, expanded: true, extraClasses: "isMaster type_action"},
+  {title: "table", key: "prop2", type: "dressing", isMaster: true, expanded: true, extraClasses: "isMaster type_dressing"},
+  {title: "episode 2", key:"ep2", type: "script", isMaster: true, expanded: true, extraClasses: "isMaster type_script"},
+  {title: "scene 2.1", key: "sc2.1", type: "scene", isMaster: true, expanded: true, extraClasses: "isMaster type_scene"},
+  {title: "Schedule", key: "schedule", type: "top_level", isMaster: true, expanded: true, extraClasses: "isMaster type_top_level"},
+  {title: "day1", key: "day1", type: "day", isMaster: true, expanded: true, extraClasses: "isMaster type_day"},
+];
+
+var LINKS = [
+  {parentId: "proj1", childId: "sets"},
+  {parentId: "proj1", childId: "scripts"},
+  {parentId: "proj1", childId: "schedule"},
+  {parentId: "sets", childId: "set1"},
+  {parentId: "sets", childId: "set2"},
+  {parentId: "sets", childId: "set3"},
+  {parentId: "scripts", childId: "ep1"},
+  {parentId: "scripts", childId: "ep2"},
+  {parentId: "schedule", childId: "day1"},
+  {parentId: "ep1", childId: "sc1.1"},
+  {parentId: "ep1", childId: "sc1.2"},
+  {parentId: "ep2", childId: "sc2.1"},
+  {parentId: "sc1.1", childId: "prop1"},
+  {parentId: "sc1.2", childId: "prop2"},
+  {parentId: "sc1.1", childId: "set1"},
+  {parentId: "sc1.2", childId: "set2"},
+  {parentId: "sc2.1", childId: "set3"},
+  {parentId: "sc2.1", childId: "prop1"},
+  {parentId: "day1", childId: "sc2.1"},
+  {parentId: "day1", childId: "sc1.2"},
+  {parentId: "day1", childId: "sc1.1"}
+]
+
+function generateTreeSource (nodes, links) {
+  links.forEach (
+    function (link) {
+      var parent = nodes.find(function(node){ return link.parentId === node.key});
+      if (parent) {
+        var child = nodes.find(function(node){ return link.childId === node.key});
+        if (child) {
+          if (child.parentId) { // already got a parent - need to create clone
+            var refKey = child.key;
+            child.refKey = refKey;
+            child = Object.assign({}, child);// create copy with unique key
+            child.refKey = refKey; // mark as clone - actually already done with assign
+            delete child.key; // get fancyTree allocate fresh one
+            delete child.children; // only master has hasChildren
+            delete child.parentId; // will be set again below
+            // !!! only want to delete the isMaster class !!!
+            child.extraClasses = "type_" + child.type;
+            child.isMaster = false;
+          }
+          child.parentId = parent.key;
+          if (!parent.children) {parent.children = []};
+          parent.children.push(child);
+        } else {
+          console.log ("child not found " + link.childId)
+        }
+      } else {
+        console.log ("parent not found " + link.parentId)
+      }
+    }
+  );
+  var rootNodes =
+    nodes.filter (node => !node.parentId);
+  return rootNodes
+}
+
+$(function(){
+    $("#tree").fancytree({
+      extensions: ["clones", "childcounter", "edit"],
+
+      source: function () {return generateTreeSource (NODES, LINKS)},
+
+      clones: {
+        highlightClones: true
+      },
+
+      childcounter: {
+        deep: true,
+        hideZeros: true,
+        hideExpanded: true
+      },
+
+      types: {
+        "project": {icon: "ft-ico-book", iconTooltip: "This is a project"},
+        "top_level": {icon: "ft-ico-book", iconTooltip: "This is a top level"},
+        "set": {icon: "ft-ico-computer", iconTooltip: "This is a set"},
+        "script": {icon: "ft-ico-computer", iconTooltip: "This is a script"},
+        "scene": {icon: "ft-ico-computer", iconTooltip: "This is a scene"},
+        "dressing": {icon: "ft-ico-computer", iconTooltip: "This is a dressing prop"},
+        "action": {icon: "ft-ico-computer", iconTooltip: "This is an action prop"}
+      },
+
+      activate: function(e, data){
+        var clones = data.node.getCloneList();
+        if( clones ) {
+//          alert("Clones: "+ $.map(clones, function(n){ return "" + n;}).join(", "));
+        }
+      }
+    });
+    $.contextMenu({
+        selector: "#tree span.fancytree-title",
+        items: {
+          "cut": {name: "Cut", icon: "cut"},
+          "copy": {name: "Copy", icon: "copy"},
+          "clone": {name: "Clone", icon: "clone", disabled: true },
+          "paste": {name: "Paste", icon: "paste", disabled: false },
+          "sep1": "----",
+          "edit": {name: "Edit", icon: "edit", disabled: true },
+          "delete": {name: "Delete", icon: "delete", disabled: true },
+          "sep2": "----",
+          "addchild": {name: "AddChild", icon: "add", disabled: false },
+          "addsibling": {name: "AddSibling", icon: "sibling", disabled: false,
+            callback: function (key, opt){
+              var node = $.ui.fancytree.getNode(opt.$trigger);
+              newData = {title: "New Node", key: new Date().toISOString()};
+              node.appendSibling (newData);
+            }
+          },
+          "branch": {name: "Branch", icon: "tree", disabled: false,
+            callback: function (key, opt){
+              var node = $.ui.fancytree.getNode(opt.$trigger);
+              node.branch ();
+            }
+          }
+        },
+        callback: function(itemKey, opt) {
+          var node = $.ui.fancytree.getNode(opt.$trigger);
+          alert("select " + itemKey + " on " + node);
+        }
+      });
+})
+
+    // extend fancytree-node
+$.ui.fancytree._FancytreeNodeClass.prototype.becomeMaster = function(visited) {
+      var previous = visited.find(function(id){return this.refKey === id});
+      if (!previous) { // been here before, dont recurse any further
+        var newMaster = this;
+        visited.push (newMaster.refKey);
+        if (!newMaster.data.isMaster) {
+          var clones = newMaster.tree.getNodesByRef(this.refKey);
+          var oldMaster = clones.find(function(clone){return clone.data.isMaster});
+          oldMaster.data.isMaster = false;
+          oldMaster.removeClass("isMaster");
+          newMaster.data.isMaster = true;
+          newMaster.addClass("isMaster");
+          if (oldMaster.children) {
+             // have to take a copy to avoid iterating and changing
+            var oldMasterChildren = oldMaster.children.slice(0);
+            oldMasterChildren.forEach (function (child) {
+            child.moveTo(newMaster,"child")
+            })
+          }
+        }
+        if (newMaster.children) {
+          newMaster.children.forEach (function(node) {node.becomeMaster (visited)})
+        } // recurse through children
+      }
+}
+
+$.ui.fancytree._FancytreeNodeClass.prototype.branch = function() {
+  this.becomeMaster([]);
+}
+
+</script>
+
+</head>
+
+<body class="example">
+  <h1>Ambition</h1>
+  <div class="description">
+    <p>
+      An app using fancyTree and pouchdb/couchdb
+    </p>
+  </div>
+
+  <!-- Add a <table> element where the tree should appear: -->
+  <div id="tree">
+  </div>
+
+  <!-- (Irrelevant source removed.) -->
+</body>
+</html>
