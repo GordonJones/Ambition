@@ -1,0 +1,36 @@
+{
+  "name": "greens",
+  "version": "1.0.0",
+  "description": "An interactive collaborative (team based) tool for generating and navigating network graphs in a hierarchical fashion.",
+  "main": "greens.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GordonJones/ambition.git"
+  },
+  "keywords": [
+    "dag",
+    "tree",
+    "nodes",
+    "links"
+  ],
+  "author": "Gordon Jones",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/GordonJones/ambition/issues"
+  },
+  "homepage": "https://github.com/GordonJones/ambition#readme",
+  "devDependencies": {
+    "electron": "latest"
+  },
+  "dependencies": {
+    "colresizable": "latest",
+    "undomanager": "latest",
+    "file-system": "latest",
+    "jquery.fancytree": "latest",
+    "pouchdb": "latest",
+    "ui-contextmenu": "latest"
+  }
+}

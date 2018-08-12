@@ -1,0 +1,47 @@
+/* context menu */
+	.ui-menu {
+		width: 260px;
+	}
+	.ui-menu kbd { /* Keyboard shortcuts for ui-contextmenu titles */
+		float: right;
+	}
+	/* custom alignment (set by 'renderColumns'' event) */
+	td.alignRight {
+	   text-align: right;
+	}
+	td.alignCenter {
+	   text-align: center;
+	}
+	td input[type=input] {
+		width: 40px;
+	}
+
+/* alternate rows */
+tr:nth-child(even) {background: #e6ffe6;}
+
+/* types ext */
+
+tr.set {color: Green;}
+tr.action_prop {color: Red;}
+tr.dressing_prop {color: GreenYellow;}
+tr.isSlave {
+	font-weight: lighter;
+	font-style: italic;
+}
+
+/* clones ext */
+
+span.fancytree-node {background-color: initial;}
+span.fancytree-node.isSlave{background-color: lightGray;}
+
+span.fancytree-node.fancytree-clone span.fancytree-title:after {
+  content: "";
+  background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAFVBMVEVmmcwzmcyZzP8AZswAZv////////9E6giVAAAAB3RSTlP///////8AGksDRgAAADhJREFUGFcly0ESAEAEA0Ei6/9P3sEcVB8kmrwFyni0bOeyyDpy9JTLEaOhQq7Ongf5FeMhHS/4AVnsAZubxDVmAAAAAElFTkSuQmCC") 100% 50% no-repeat;
+  padding-right: 13px;
+}
+
+span.fancytree-node.fancytree-active-clone {
+  border-color: blue;
+}
+
+.flash {background-color: #80ff80;}

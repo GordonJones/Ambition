@@ -1,33 +1,50 @@
-# Greens will be
+# greens
+## A work in progress
 
-My retirement project
+A collaborative editor of hierarchical and network information.
 
-An interactive collaborative (team based) tool for generating and navigating network graphs in a hierarchical fashion.
+Greens uses fancytree (https://github.com/mar10/fancytree) to present an editable hierachy.
 
-Used by teams to capture hierarchical breakdowns for planning / estimating purposes.
+Greens uses pouchdb/couchdb (https://pouchdb.com) for persistance and distributed publish subscribe.
 
-Multi user with collaborative real time working using publish subscribe with user assisted conflict resolution.
+#### Network vs Hierarchical
+The data that Greens manipulates is organised as a network of nodes and links. However the user interface presents a hierachical view of the model (parent and children). Greens provides the mapping between the network and the hierarchical models.
 
-Local changes are proposed & published, and the server sends the update back via the subscription.
+The hierarchical view is achieved by duplicating network nodes where they have >1 parent, but recognising that the duplicates are clones of the same node that must be kept in step.
 
-The server and the hierarchical presentation have different data models. The Server holds nodes and links - a network. It doesn't know about the presentation hierarchy, nor any calculated values.
+#### Multi user
+Many users can work collaboratively on the same document. Pouchdb provides publish subscribe so each user is kept up to date with the changes each is making. Pouch also provides conflict detection and resolution mechanisms for the situation where more than one user is editing the same part of the tree at the same time.
 
-The human client sees and interacts with a strict hierarchic tree view of a chosen path through network.
+The editor will work seemlessly offline, syncronising users when they connect back to the network.
 
-A semantic glue module will sit between the presentation and the server dynamically handling the publish subscribe interactions, and creating "alias/clone rows" for nodes with multiple parents. The end user can dynamically choose which clone to use for the hierarchical presentation of its own children.
+#### Sreadsheet
+The editor will have some limited spreadsheet functionality:
 
-The hierarchy will have some limited spreadsheet functionality:
-
-  formulae between cells on the same row. (eg charge = rate * days)
+  row calculations between cells in the same row (eg charge = rate * days)
 
   Aggregation of cell values up through column branches. (eg summing the above charge column)
 
-Ideally row heights will be derived from max cell content for each cell in the row (word wrapped for text).
+  In some network node/link models, a value attribute can be assigned to the link (See Sankey diagrams). In the greens hierchical model, the link becomes one of the parent/child relationships. This value on the link is currently not used by the spreadsheet functionality.
 
-Local offline working will be supported with eventual consistency achieved with via user assisted conflict resolution.
+#### Which Tree / grid editor
+The ui needs to have good support for both hierarchical and grid data. There are loads of tools out there
+1. Ag-grid
+2. react-redux-grid
+3. JSTree
+4. slickgrid
+5. fancytree
 
-The objective is to write as little of this as possible other than the semantic glue between the tree presentation and persistent server, and the spreadsheet functionality.
+are ones that the author has examined. Each has its own strengths. I have picked fancytree primarilly for its excellent tree support, good documention, light footprint, and recognition of network mapping with its refKey attribute. But its main drawback is its limited spreadsheet grid support; Its columns feature is very much an afterthought. Ag-grid looks a possible candidate, but its a commercial product so unsuitable for my experiments.
 
-The functionality the publish/subscribe and of the server side of this application matches almost perfectly with pouchdb/couchdb.
+#### Desktop vs Web
+Initial development used a web browser and remote server for the initial web page. The inital page used urls to cdn versions of its dependencies. I now use electron so greens runs on the desktop, and dependencies use local npm modules. I am having severe problems integrating electron, fancytree, jquery and jquery ui. I believe it can be done - but I am struggling to get it all to work together.
 
-The client side could be almost any of the variety of tree based web products. Ag-grid, react-redux-grid, JSTree, have all been investigated. At present the favourite is FancyTree, primarilly because it already acknowledges the clone concept, but also it has a somewhat lighter footprint and learning curve than the REACT based tree views.
+#### Code structure
+The greens code is mostly glue between fancytree and pouch, so very little of it is unpolluted by both these tools, but I have split it into functional components.
+1. **greens_undoable** - (Almost) every action you perform with Greens is undoable (over the pouch/couch network, not just locally). In fact when the user requests an action, it is not performed directly there and then. Rather the action changes to the nodes and links are published and the ui is changed when the subscription arrives back in the tree. If you have more than one tree on the screen, or multiple users operating remotely, they all get updated in the same way.
+2. **greens_spreadsheet** - Not much in here yet - just a mini demo of some of the desired functionality.
+3. **greens_pub_sub** - Mostly the interface to pouchdb, although if using local files only, a local pub sub is also provided.
+4. **greens_master_slave** - The code that manages the mismatch between the network and hierarchical data models.
+5. **greens_core** - the rest
+
+As well as fancytree and pouchdb, the code also makes use of col-resizable and undo-manager.

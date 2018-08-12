@@ -2,262 +2,295 @@
 <html>
 <head>
   <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
-  <title>Ambition using fancyTree and pouchdb</title>
+  <title>greens</title>
 
-  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/jquery.fancytree@2.27/dist/skin-lion/ui.fancytree.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/jquery.fancytree@2.27/dist/jquery.fancytree-all-deps.min.js"></script>
+  <!-- greens styles -->
+  <link href="./css/greens.css" rel="stylesheet">
+  <link href="./css/resizable.css" rel="stylesheet">
 
-  <!-- jquery-contextmenu (https://github.com/swisnl/jQuery-contextMenu) -->
-  <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.2.3/jquery.contextMenu.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.2.3/jquery.contextMenu.min.js">
-  </script>
+  <script type="text/javascript">
 
-<style type="text/css">
-span.fancytree-node.type_set span.fancytree-title {
-  color: brown;
-}
-span.fancytree-node.type_action span.fancytree-title {
-  color: red;
-}
-span.fancytree-node.type_dressing span.fancytree-title {
-  color: green;
-}
-span.fancytree-node.fancytree-clone{
-  background-color: Snow;
-}
-span.fancytree-node.isMaster {
-  background-color: initial;
-}
-span.fancytree-node.fancytree-clone span.fancytree-title:after {
-  content: "";
-  background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAFVBMVEVmmcwzmcyZzP8AZswAZv////////9E6giVAAAAB3RSTlP///////8AGksDRgAAADhJREFUGFcly0ESAEAEA0Ei6/9P3sEcVB8kmrwFyni0bOeyyDpy9JTLEaOhQq7Ongf5FeMhHS/4AVnsAZubxDVmAAAAAElFTkSuQmCC") 100% 50% no-repeat;
-  padding-right: 13px;
-}
+  window.$ = window.jQuery = require('jquery')
+  //fix for Jquery in Node
 
+  const pouchdb = require("pouchdb")
+  //const colResizable = require("colresizable")
+  const fancytree = require("jquery.fancytree")
+  const contextmenu = require("ui-contextmenu")
+  const filesystem = require("file-system")
+  const UndoManager = require('undomanager.js')
 
-span.fancytree-node.fancytree-active-clone {
-  border-color: blue;
-  -moz-animation: flash 1s ease-out;
-  -moz-animation-iteration-count: 1;
-  -webkit-animation: flash 1s ease-out;
-  -webkit-animation-iteration-count: 1;
-  -ms-animation: flash 1s ease-out;
-  -ms-animation-iteration-count: 1;
-}
+  const treeConfig = require('./js/greens_config.js')
+  const greensCore = require('./js/greens_core.js')
+  const greensMasterSlave = require('./js/greens_master_slave.js')
+  const greensPubSub = require('./js/greens_pub_sub.js')
+  const greensSpreadsheet = require('./js/greens_spreadsheet.js')
+  const greensTypes = require('./js/greens_types.js')
+  const greensUndoable = require('./js/greens_undoable.js')
 
-@-ms-keyframes flash {
-  0% { background-color:none;}
-  50% { background-color:#fbf8b2;}
-  100% {background-color:none;}
-}
-@-moz-keyframes flash {
-  0% { background-color:none;}
-  50% { background-color:#fbf8b2;}
-  100% {background-color:none;}
-}
-@-ms-keyframes flash {
-  0% { background-color:none;}
-  50% { background-color:#fbf8b2;}
-  100% {background-color:none;}
-}
-</style>
+$(function() {
 
+  $( "#open-button" ).on( "click", function() {
+    openDB("testdb");
+  });
+  $( "#import-sankey-button" ).on( "click", function() {
+    importSankeyJSON();
+  });
+  $( "#import-les-mis-button" ).on( "click", function() {
+    importLesMisJSON();
+  });
+  $( "#toggle-types" ).on( "click", function() {
+    $( "#types-container" ).toggle( "fast");
+  });
+  $( "#change-type" ).on( "click", function() {
+    var index = $("#edit-type-form input[name=type-index]").val();
+    var type = types[index];
+    addType({
+      name: $("#edit-type-form input[name=name]").val(),
+      format: $("#edit-type-form input[name=format]").val(),
+      defaultChildType: $("#edit-type-form input[name=child-type]").val(),
+      index: index
+    },
+    index)
+  });
 
-<!-- Add code to initialize the tree when the document is loaded: -->
-<script type="text/javascript">
-
-var NODES = [
-  {title: "Game of Thrones", key: "proj1", type: "project", isMaster: true, expanded: true, extraClasses: "isMaster type_project"},
-  {title: "Sets", key:"sets", type: "top_level", isMaster: true, expanded: true, extraClasses: "isMaster type_top_level"},
-  {title: "INT Annie's House", key:"set1", type: "set", isMaster: true, expanded: true, extraClasses: "isMaster type_set"},
-  {title: "EXT Annie's House", key:"set2", type: "set", isMaster: true, expanded: true, extraClasses: "isMaster type_set"},
-  {title: "Annie's car", key: "set3", type: "set", isMaster: true, expanded: true, extraClasses: "isMaster type_set"},
-  {title: "Scripts", key:"scripts", type: "top_level", isMaster: true, expanded: true, extraClasses: "isMaster type_top_level"},
-  {title: "episode 1", key:"ep1", type: "script", isMaster: true, expanded: true, extraClasses: "isMaster type_script"},
-  {title: "scene 1.1", key: "sc1.1", type: "scene", isMaster: true, expanded: true, extraClasses: "isMaster type_scene"},
-  {title: "scene 1.2", key: "sc1.2", type: "scene", isMaster: true, expanded: true, extraClasses: "isMaster type_scene"},
-  {title: "newspaper", key: "prop1", type: "action", isMaster: true, expanded: true, extraClasses: "isMaster type_action"},
-  {title: "table", key: "prop2", type: "dressing", isMaster: true, expanded: true, extraClasses: "isMaster type_dressing"},
-  {title: "episode 2", key:"ep2", type: "script", isMaster: true, expanded: true, extraClasses: "isMaster type_script"},
-  {title: "scene 2.1", key: "sc2.1", type: "scene", isMaster: true, expanded: true, extraClasses: "isMaster type_scene"},
-  {title: "Schedule", key: "schedule", type: "top_level", isMaster: true, expanded: true, extraClasses: "isMaster type_top_level"},
-  {title: "day1", key: "day1", type: "day", isMaster: true, expanded: true, extraClasses: "isMaster type_day"},
-];
-
-var LINKS = [
-  {parentId: "proj1", childId: "sets"},
-  {parentId: "proj1", childId: "scripts"},
-  {parentId: "proj1", childId: "schedule"},
-  {parentId: "sets", childId: "set1"},
-  {parentId: "sets", childId: "set2"},
-  {parentId: "sets", childId: "set3"},
-  {parentId: "scripts", childId: "ep1"},
-  {parentId: "scripts", childId: "ep2"},
-  {parentId: "schedule", childId: "day1"},
-  {parentId: "ep1", childId: "sc1.1"},
-  {parentId: "ep1", childId: "sc1.2"},
-  {parentId: "ep2", childId: "sc2.1"},
-  {parentId: "sc1.1", childId: "prop1"},
-  {parentId: "sc1.2", childId: "prop2"},
-  {parentId: "sc1.1", childId: "set1"},
-  {parentId: "sc1.2", childId: "set2"},
-  {parentId: "sc2.1", childId: "set3"},
-  {parentId: "sc2.1", childId: "prop1"},
-  {parentId: "day1", childId: "sc2.1"},
-  {parentId: "day1", childId: "sc1.2"},
-  {parentId: "day1", childId: "sc1.1"}
-]
-
-function generateTreeSource (nodes, links) {
-  links.forEach (
-    function (link) {
-      var parent = nodes.find(function(node){ return link.parentId === node.key});
-      if (parent) {
-        var child = nodes.find(function(node){ return link.childId === node.key});
-        if (child) {
-          if (child.parentId) { // already got a parent - need to create clone
-            var refKey = child.key;
-            child.refKey = refKey;
-            child = Object.assign({}, child);// create copy with unique key
-            child.refKey = refKey; // mark as clone - actually already done with assign
-            delete child.key; // get fancyTree allocate fresh one
-            delete child.children; // only master has hasChildren
-            delete child.parentId; // will be set again below
-            // !!! only want to delete the isMaster class !!!
-            child.extraClasses = "type_" + child.type;
-            child.isMaster = false;
-          }
-          child.parentId = parent.key;
-          if (!parent.children) {parent.children = []};
-          parent.children.push(child);
-        } else {
-          console.log ("child not found " + link.childId)
-        }
-      } else {
-        console.log ("parent not found " + link.parentId)
-      }
-    }
-  );
-  var rootNodes =
-    nodes.filter (node => !node.parentId);
-  return rootNodes
-}
-
-$(function(){
-    $("#tree").fancytree({
-      extensions: ["clones", "childcounter", "edit"],
-
-      source: function () {return generateTreeSource (NODES, LINKS)},
-
-      clones: {
-        highlightClones: true
-      },
-
-      childcounter: {
-        deep: true,
-        hideZeros: true,
-        hideExpanded: true
-      },
-
-      types: {
-        "project": {icon: "ft-ico-book", iconTooltip: "This is a project"},
-        "top_level": {icon: "ft-ico-book", iconTooltip: "This is a top level"},
-        "set": {icon: "ft-ico-computer", iconTooltip: "This is a set"},
-        "script": {icon: "ft-ico-computer", iconTooltip: "This is a script"},
-        "scene": {icon: "ft-ico-computer", iconTooltip: "This is a scene"},
-        "dressing": {icon: "ft-ico-computer", iconTooltip: "This is a dressing prop"},
-        "action": {icon: "ft-ico-computer", iconTooltip: "This is an action prop"}
-      },
-
-      activate: function(e, data){
-        var clones = data.node.getCloneList();
-        if( clones ) {
-//          alert("Clones: "+ $.map(clones, function(n){ return "" + n;}).join(", "));
-        }
-      }
-    });
-    $.contextMenu({
-        selector: "#tree span.fancytree-title",
-        items: {
-          "cut": {name: "Cut", icon: "cut"},
-          "copy": {name: "Copy", icon: "copy"},
-          "clone": {name: "Clone", icon: "clone", disabled: true },
-          "paste": {name: "Paste", icon: "paste", disabled: false },
-          "sep1": "----",
-          "edit": {name: "Edit", icon: "edit", disabled: true },
-          "delete": {name: "Delete", icon: "delete", disabled: true },
-          "sep2": "----",
-          "addchild": {name: "AddChild", icon: "add", disabled: false },
-          "addsibling": {name: "AddSibling", icon: "sibling", disabled: false,
-            callback: function (key, opt){
-              var node = $.ui.fancytree.getNode(opt.$trigger);
-              newData = {title: "New Node", key: new Date().toISOString()};
-              node.appendSibling (newData);
-            }
-          },
-          "branch": {name: "Branch", icon: "tree", disabled: false,
-            callback: function (key, opt){
-              var node = $.ui.fancytree.getNode(opt.$trigger);
-              node.branch ();
-            }
-          }
-        },
-        callback: function(itemKey, opt) {
-          var node = $.ui.fancytree.getNode(opt.$trigger);
-          alert("select " + itemKey + " on " + node);
-        }
-      });
-})
-
-    // extend fancytree-node
-$.ui.fancytree._FancytreeNodeClass.prototype.becomeMaster = function(visited) {
-      var previous = visited.find(function(id){return this.refKey === id});
-      if (!previous) { // been here before, dont recurse any further
-        var newMaster = this;
-        visited.push (newMaster.refKey);
-        if (!newMaster.data.isMaster) {
-          var clones = newMaster.tree.getNodesByRef(this.refKey);
-          var oldMaster = clones.find(function(clone){return clone.data.isMaster});
-          oldMaster.data.isMaster = false;
-          oldMaster.removeClass("isMaster");
-          newMaster.data.isMaster = true;
-          newMaster.addClass("isMaster");
-          if (oldMaster.children) {
-             // have to take a copy to avoid iterating and changing
-            var oldMasterChildren = oldMaster.children.slice(0);
-            oldMasterChildren.forEach (function (child) {
-            child.moveTo(newMaster,"child")
-            })
-          }
-        }
-        if (newMaster.children) {
-          newMaster.children.forEach (function(node) {node.becomeMaster (visited)})
-        } // recurse through children
-      }
-}
-
-$.ui.fancytree._FancytreeNodeClass.prototype.branch = function() {
-  this.becomeMaster([]);
-}
+  $("#tree")
+    .fancytree(treeConfig)
+    // .colResizable ({
+    //   liveDrag:true,
+    //   gripInnerHtml:"<div class='grip'></div>",
+    //   draggingClass:"dragging"
+    // })
+    .on("nodeCommand", function(event, data){
+		    // Custom event handler that is triggered by keydown-handler and
+		     // context menu:
+		  var refNode, moveMode,
+			tree = $(this).fancytree("getTree"),
+			node = tree.getActiveNode();
+		  switch( data.cmd ) {
+        case "undo":
+  			  undoManager.undo();
+  			  break;
+        case "redo":
+    			undoManager.redo();
+    			break;
+        case "moveUp":
+      	  node.undoableMoveUp();
+      		break;
+  		  case "moveDown":
+  			  node.undoableMoveDown();
+  			  break;
+  		  case "indent":
+          node.undoableIndent();
+  			  break;
+  		  case "outdent":
+          node.undoableOutdent();
+  			  break;
+  		  case "rename":
+  			  node.editStart(); // the undoable bit comes when the editor is closed
+  			  break;
+  		  case "remove":
+  			  node.undoableRemove();
+  			  break;
+  		  case "addChild":
+          node.undoableAddChild();
+          break;
+        case "addSibling":
+          node.undoableAddSibling();
+    			break;
+        case "branch":
+          node.branch (); // nothing new is created/deleted/edited, so not undoable
+      		break;
+  		  case "cut":
+  			  CLIPBOARD = {mode: data.cmd, data: node};
+  			  break;
+  		  case "copy":
+  			  CLIPBOARD = {
+  				  mode: data.cmd,
+  		      data: node.toDict(function(n){
+  					delete n.key;
+  		      })
+          };
+  			  break;
+  		  case "clear":
+  			  CLIPBOARD = null;
+  			  break;
+  		  case "paste":
+  			  if( CLIPBOARD.mode === "cut" ) {
+  				  // refNode = node.getPrevSibling();
+  				  CLIPBOARD.data.moveTo(node, "child");
+  				  CLIPBOARD.data.setActive();
+  			  } else if( CLIPBOARD.mode === "copy" ) {
+          // to do - deep set new keys
+  				node.addChildren(CLIPBOARD.data).setActive();
+  			  }
+  			  break;
+  		  default:
+  			  alert("Unhandled command: " + data.cmd);
+  			  return;
+		  }
+    })
+    .on("keydown", function(e){
+	      var cmd = null;
+	      console.log(e.type, $.ui.fancytree.eventToString(e));
+	      switch( $.ui.fancytree.eventToString(e) ) {
+        case "ctrl+z":
+  	    case "meta+z": // mac: cmd+shift+n
+  		    cmd = "undo";
+  		    break;
+        case "ctrl+shift+z":
+    	  case "meta+shift+z": // mac: cmd+shift+n
+    		  cmd = "redo";
+    		  break;
+	      case "ctrl+shift+n":
+	      case "meta+shift+n": // mac: cmd+shift+n
+		      cmd = "addChild";
+		      break;
+		    case "ctrl+c":
+		    case "meta+c": // mac
+		      cmd = "copy";
+		      break;
+		    case "ctrl+v":
+		    case "meta+v": // mac
+			    cmd = "paste";
+			    break;
+		    case "ctrl+x":
+		    case "meta+x": // mac
+			    cmd = "cut";
+			    break;
+		    case "ctrl+n":
+		    case "meta+n": // mac
+			    cmd = "addSibling";
+			    break;
+		    case "del":
+		    case "meta+backspace": // mac
+			    cmd = "remove";
+			    break;
+		      // case "f2":  // already triggered by ext-edit pluging
+		      // 	cmd = "rename";
+		      // 	break;
+		    case "ctrl+up":
+        case "meta+up": // mac
+			    cmd = "moveUp";
+			    break;
+		    case "ctrl+down":
+        case "meta+down": // mac
+		    cmd = "moveDown";
+			    break;
+		    case "ctrl+right":
+		    case "ctrl+shift+right": // mac
+			    cmd = "indent";
+			    break;
+		    case "ctrl+left":
+		    case "ctrl+shift+left": // mac
+			    cmd = "outdent";
+		    }
+		    if( cmd ){
+			     $(this).trigger("nodeCommand", {cmd: cmd});
+			        // e.preventDefault();
+			        // e.stopPropagation();
+			     return false;
+		    }
+	  })
+    .contextmenu({
+	      delegate: "span.fancytree-node",
+	      menu: [
+          {title: "Undo <kbd>[Ctrl+Z]</kbd>", cmd: "undo", uiIcon: "ui-icon-undo" },
+          {title: "Redo <kbd>[Ctrl+Shift+Z]</kbd>", cmd: "redo", uiIcon: "ui-icon-redo" },
+          {title: "----"},
+		       {title: "Delete <kbd>[Del]</kbd>", cmd: "remove", uiIcon: "ui-icon-trash" },
+		       {title: "----"},
+		       {title: "Add sibling <kbd>[Ctrl+N]</kbd>", cmd: "addSibling", uiIcon: "ui-icon-plus" },
+		       {title: "Add child <kbd>[Ctrl+Shift+N]</kbd>", cmd: "addChild", uiIcon:  "ui-icon-arrowreturn-1-e" },
+		       {title: "----"},
+		       {title: "Cut <kbd>Ctrl+X</kbd>", cmd: "cut", uiIcon: "ui-icon-scissors"},
+		       {title: "Copy <kbd>Ctrl-C</kbd>", cmd: "copy", uiIcon: "ui-icon-copy"},
+           {title: "Paste as clone<kbd>Ctrl+Shift+V</kbd>", cmd: "pasteClone", uiIcon: "ui-icon-clipboard", disabled: true },
+           {title: "Paste as sibling<kbd>Ctrl+V</kbd>", cmd: "pasteSibling", uiIcon: "ui-icon-clipboard", disabled: true },
+           {title: "Paste as child<kbd>Ctrl+alt+V</kbd>", cmd: "pasteChild", uiIcon: "ui-icon-clipboard", disabled: true },
+           {title: "----"},
+           {title: "Branch <kbd>[Ctrl+B]</kbd>", cmd: "branch", uiIcon: "ui-icon-fork"},
+           {title: "Jump to Master <kbd>[Ctrl+B]</kbd>", cmd: "jump", uiIcon: "ui-icon-fork"}
+	      ],
+	      beforeOpen: function(event, ui) {
+		       var node = $.ui.fancytree.getNode(ui.target);
+		       $("#tree")
+              .contextmenu("enableEntry", "pasteChild", !!CLIPBOARD)
+              .contextmenu("enableEntry", "pasteClone", !!CLIPBOARD)
+              .contextmenu("enableEntry", "pasteSibling", !!CLIPBOARD)
+              .contextmenu("enableEntry", "addChild", node.isMaster())
+              .contextmenu("enableEntry", "jump", !!node.isMaster())
+		          node.setActive();
+	       },
+	       select: function(event, ui) {
+		          var that = this;
+			           // delay the event, so the menu can close and the click event does
+			           // not interfere with the edit control
+		          setTimeout(function(){
+			             $(that).trigger("nodeCommand", {cmd: ui.cmd});
+		          }, 100);
+	       }
+    })
+  });
 
 </script>
 
 </head>
 
 <body class="example">
-  <h1>Ambition</h1>
-  <div class="description">
-    <p>
-      An app using fancyTree and pouchdb/couchdb
-    </p>
+  <div>
+    <button id="open-button">Open POUCH Project</button>
+    <button id="import-sankey-button">Import project from Sankey file</button>
+    <button id="import-les-mis-button">Import project from Les Mis file</button>
+    <button id="toggle-types">Toggle types</button>
   </div>
+  <fieldset>
+  <div id="types-container" >
+    <div id="types-list">
+      <ul id="types">
+      </ul>
+    </div>
+    <div>
+      <form id="edit-type-form" title="Edit type">
+          <label for="name">Type Name</label>
+          <input type="text" name="name" id="name" value="" class="text ui-widget-content ui-corner-all">
+          <label for="format">CSS format</label>
+          <input type="text" name="format" id="format" value="" size="30" class="text ui-widget-content ui-corner-all">
+          <label for="child-type">Default child type</label>
+          <input type="text" name="child-type" id="child-type" value="" class="text ui-widget-content ui-corner-all">
+          <input type="text" name="type-index" id="type-index" value="" style="display:none;">
+
+          <button id="change-type">Change type</button>
+      </form>
+    </div>
+  </div>
+</fieldset>
+
 
   <!-- Add a <table> element where the tree should appear: -->
-  <div id="tree">
-  </div>
+  <table id="tree" width="100%">
+		<thead>
+			<tr>
+        <th width = "12%">Posn</th>
+        <th width = "8%">Type</th>
+        <th width = "62%">Title</th>
+        <th width = "6%">rate</th>
+        <th width = "6%">number</th>
+        <th width = "6%">total</th>
+      </tr>
+		</thead>
+		<tbody>
+			<!-- Define a row template for all invariant markup: -->
+			<tr>
+			  <td></td>
+			  <td></td>
+			  <td></td>
+        <td></td>
+			  <td></td>
+        <td></td>
+			</tr>
+		</tbody>
+	</table>
 
-  <!-- (Irrelevant source removed.) -->
 </body>
 </html>

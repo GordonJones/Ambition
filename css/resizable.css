@@ -1,0 +1,35 @@
+th{
+  background-image:
+    linear-gradient(
+        to top right,
+        green, snow
+    );
+   height:30px;
+   background-repeat:no-repeat;
+   color:white;
+   text-shadow: #012b4d 2px 2px 2px;
+   text-align: center;
+}
+
+.grip{
+	width:20px;
+	height:15px;
+	margin-top:-3px;
+	background-image:url('../img/grip.png');
+	margin-left:-5px;
+	position:relative;
+	z-index:88;
+	cursor:e-resize;
+}
+
+.grip:hover{
+	background-position-x:-20px;
+}
+.JCLRLastGrip .grip{
+    background-position-y:-18px;
+    left:-2px;
+}
+
+.dragging .grip{
+	background-position-x:-40px;
+}
