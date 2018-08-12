@@ -14,11 +14,12 @@
   //fix for Jquery in Node
 
   const pouchdb = require("pouchdb")
-  //const colResizable = require("colresizable")
+  //const colResizable = require("colResizable")
   const fancytree = require("jquery.fancytree")
+  //const jQueryUi = require("jquery-ui")
   const contextmenu = require("ui-contextmenu")
   const filesystem = require("file-system")
-  const UndoManager = require('undomanager.js')
+  const UndoManager = require('undo-manager')
 
   const treeConfig = require('./js/greens_config.js')
   const greensCore = require('./js/greens_core.js')
@@ -26,7 +27,6 @@
   const greensPubSub = require('./js/greens_pub_sub.js')
   const greensSpreadsheet = require('./js/greens_spreadsheet.js')
   const greensTypes = require('./js/greens_types.js')
-  const greensUndoable = require('./js/greens_undoable.js')
 
 $(function() {
 

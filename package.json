@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/GordonJones/ambition.git"
+    "url": "git+https://github.com/GordonJones/greens.git"
   },
   "keywords": [
     "dag",
@@ -19,15 +19,14 @@
   "author": "Gordon Jones",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/GordonJones/ambition/issues"
+    "url": "https://github.com/GordonJones/greens/issues"
   },
-  "homepage": "https://github.com/GordonJones/ambition#readme",
+  "homepage": "https://github.com/GordonJones/greens#readme",
   "devDependencies": {
     "electron": "latest"
   },
   "dependencies": {
-    "colresizable": "latest",
-    "undomanager": "latest",
+    "undo-manager": "latest",
     "file-system": "latest",
     "jquery.fancytree": "latest",
     "pouchdb": "latest",
